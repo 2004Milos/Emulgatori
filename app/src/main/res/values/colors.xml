@@ -5,7 +5,7 @@
     <color name="brown_400">#aaa6a4</color>
     <color name="brown_300">#d6d0b8</color>
     <color name="brown_100">#f1f4c6</color>
-    <color name="teal_700">#FF018786</color>
+    <color name="brick">#A36D6D</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 </resources>
