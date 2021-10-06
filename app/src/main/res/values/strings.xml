@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Emulgatori</string>
+    <string name="values_file_key">ValuesFile</string>
+    <string name="read_memory_perm_message">Potrebno je da dozvolite aplikaciji pristup memoriji uređaja, kako bi mogli da odaberete fotografiju</string>
 </resources>
