@@ -40,6 +40,44 @@ public class AddImageActivity extends AppCompatActivity {
     Intent pickImageIntent; //Intent za preuzimanje slike iz galerije
     SharedPreferences sharedPref;
 
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.add_image_activity);
+
+        camFab = findViewById(R.id.fabCamera);
+        attachFab = findViewById(R.id.fabAttach);
+        imageView = findViewById(R.id.img);
+
+        pickImageIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI); //Intent za otvaranje galerije
+        sharedPref = AddImageActivity.this.getSharedPreferences(getString(R.string.values_file_key), Context.MODE_PRIVATE);//Cuvanje podataka u memoriji, u key-value formatu
+
+        camFab.setOnClickListener(v -> {
+            Intent i = new Intent(MediaStore.ACTION_IMAGE_CAPTURE); //POKRETANJE KAMERE
+            intentCode = IntentCode.kamera;
+            StartForResult.launch(i);
+        });
+
+        attachFab.setOnClickListener(v -> {
+            if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                intentCode = IntentCode.galerija;
+                StartForResult.launch(pickImageIntent); //POKRETANJE PRETRAGE SLIKA, AKO JE DATA DOZVOLA
+            }
+            else if(shouldShowRequestPermissionRationale(Manifest.permission.READ_EXTERNAL_STORAGE))
+                askForPermissionDialog("Potrebna dozvola", getString(R.string.read_memory_perm_message), Manifest.permission.READ_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE, false);
+            else {
+                //Ako korisnik nikad nije odbio premisiju - otvoriti dijalog, u suprotnom je odbio vise od 2 puta
+                // pa se dozvola mora dati korz podesavanja
+                if(sharedPref.getInt("BrojOdbijanjaReadPermisije", 0) == 0)
+                    requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, READ_EXTERNAL_STORAGE);
+                else
+                    askForPermissionDialog("Potrebna dozvola", getString(R.string.read_memory_perm_message), Manifest.permission.READ_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE, true);
+            }
+        });
+    }
+
+
     ActivityResultLauncher<Intent> StartForResult = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
             new ActivityResultCallback<ActivityResult>() {
                 @Override
@@ -89,44 +127,8 @@ public class AddImageActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.add_image_activity);
-
-        camFab = findViewById(R.id.fabCamera);
-        attachFab = findViewById(R.id.fabAttach);
-        imageView = findViewById(R.id.img);
-
-        pickImageIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI); //Intent za otvaranje galerije
-        sharedPref = AddImageActivity.this.getSharedPreferences(getString(R.string.values_file_key), Context.MODE_PRIVATE);//Cuvanje podataka u memoriji, u key-value formatu
-
-        camFab.setOnClickListener(v -> {
-            Intent i = new Intent(MediaStore.ACTION_IMAGE_CAPTURE); //POKRETANJE KAMERE
-            intentCode = IntentCode.kamera;
-            StartForResult.launch(i);
-        });
-
-        attachFab.setOnClickListener(v -> {
-            if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-                intentCode = IntentCode.galerija;
-                StartForResult.launch(pickImageIntent); //POKRETANJE PRETRAGE SLIKA, AKO JE DATA DOZVOLA
-            }
-            else if(shouldShowRequestPermissionRationale(Manifest.permission.READ_EXTERNAL_STORAGE))
-                    askForPermissionDialog("Potrebna dozvola", getString(R.string.read_memory_perm_message), Manifest.permission.READ_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE, false);
-            else {
-                //Ako korisnik nikad nije odbio premisiju - otvoriti dijalog, u suprotnom je odbio vise od 2 puta
-                // pa se dozvola mora dati korz podesavanja
-                if(sharedPref.getInt("BrojOdbijanjaReadPermisije", 0) == 0)
-                    requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, READ_EXTERNAL_STORAGE);
-                else
-                    askForPermissionDialog("Potrebna dozvola", getString(R.string.read_memory_perm_message), Manifest.permission.READ_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE, true);
-            }
-        });
-    }
-
     /**
-    @param inSettings Da li ce funkcija pokusati da otvori dijalog za davanje dozvole, ili ce otvoriti settings
+     @param inSettings Da li ce funkcija pokusati da otvori dijalog za davanje dozvole, ili ce otvoriti settings
      */
     private void askForPermissionDialog(String title, String message, final String permission, final int permissionRequestCode, boolean inSettings) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
