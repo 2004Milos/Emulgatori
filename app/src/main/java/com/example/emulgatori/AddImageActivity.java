@@ -22,6 +22,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.provider.Settings;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.ImageView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -36,6 +38,8 @@ public class AddImageActivity extends AppCompatActivity {
     ImageView imageView;
     FloatingActionButton camFab; //Dugme za otvaranje kamere
     FloatingActionButton attachFab; //Dugme za otvaranje galerije
+
+    MenuItem doneBtn, cancelBtn;//Dugmad u Action baru (na vrhu)
 
     Intent pickImageIntent; //Intent za preuzimanje slike iz galerije
     SharedPreferences sharedPref;
@@ -77,6 +81,18 @@ public class AddImageActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu, menu);
+        cancelBtn = menu.findItem(R.id.cancel_btn);
+        doneBtn = menu.findItem(R.id.done_btn);
+
+        cancelBtn.setOnMenuItemClickListener(item -> {
+            finish();//Vraca se u MainActivity
+            return true;
+        });
+        return super.onCreateOptionsMenu(menu);
+    }
 
     ActivityResultLauncher<Intent> StartForResult = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
             new ActivityResultCallback<ActivityResult>() {
@@ -104,7 +120,8 @@ public class AddImageActivity extends AppCompatActivity {
                         }
 
                         ((ImageView)findViewById(R.id.img)).setImageBitmap(photo);
-                        //TODO -> BITMAPA SE PROSJEDJUJE U OPENCV/TESSERACT...
+                        doneBtn.setEnabled(true);
+                        //TODO -> BITMAPA SE CROPUJE i PROSLEEDJUJE U OPENCV/TESSERACT...
 
                     }
                 }
