@@ -120,7 +120,7 @@ public class AddImageActivity extends AppCompatActivity {
                         }
 
                         ((ImageView)findViewById(R.id.img)).setImageBitmap(photo);
-                        doneBtn.setEnabled(true);
+                        doneBtn.setVisible(true);
                         //TODO -> BITMAPA SE CROPUJE i PROSLEEDJUJE U OPENCV/TESSERACT...
 
                     }
