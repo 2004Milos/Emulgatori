@@ -18,6 +18,7 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Point;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -53,6 +54,10 @@ public class AddImageActivity extends AppCompatActivity {
         camFab = findViewById(R.id.fabCamera);
         attachFab = findViewById(R.id.fabAttach);
         imageView = findViewById(R.id.img);
+
+        Point size = new Point();
+        getWindowManager().getDefaultDisplay().getSize(size);//DIMENZIJA EKRANA
+        attachFab.setX(0.22f * size.x);
 
         pickImageIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI); //Intent za otvaranje galerije
         sharedPref = AddImageActivity.this.getSharedPreferences(getString(R.string.values_file_key), Context.MODE_PRIVATE);//Cuvanje podataka u memoriji, u key-value formatu

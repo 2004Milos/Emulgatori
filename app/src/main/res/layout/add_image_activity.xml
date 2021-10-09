@@ -13,18 +13,18 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:adjustViewBounds="true"
-        android:src="@drawable/ic_baseline_photo_camera_24" />
+        android:src="@drawable/ic_baseline_photo_camera_24"
+        android:layout_gravity="center"
+        />
 
     <com.google.android.material.bottomappbar.BottomAppBar
         android:id="@+id/bottom_app_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
+
         app:backgroundTint="@color/brown_400"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
         />
 
 
@@ -45,7 +45,6 @@
         android:id="@+id/fabAttach"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="100dp"
         android:src="@drawable/ic_baseline_attach_file_24"
         app:backgroundTint="@color/brown_500"
         app:layout_anchor="@id/bottom_app_bar"
