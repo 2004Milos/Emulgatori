@@ -8,6 +8,48 @@
     android:background="@color/brown_100"
     tools:context=".AddImageActivity">
 
+    <Toolbar xmlns:android="http://schemas.android.com/apk/res/android"
+        android:visibility="invisible"
+        android:id = "@+id/tbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/brown_400"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark">
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/rotate_left_btn"
+            android:src="@drawable/ic_baseline_rotate_left_24"
+            android:layout_gravity="center">
+        </ImageButton>
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/rotate_right_btn"
+            android:src="@drawable/ic_baseline_rotate_right_24"
+            android:layout_gravity="center">
+        </ImageButton>
+
+        <ImageButton
+            android:id="@+id/flipy_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_baseline_flipy_24"
+            android:layout_gravity="center">
+        </ImageButton>
+
+        <ImageButton
+            android:id="@+id/flipx_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_baseline_flipx_24"
+            android:layout_gravity="center">
+        </ImageButton>
+
+    </Toolbar>
+
     <ImageView
         android:id="@+id/img"
         android:layout_width="match_parent"

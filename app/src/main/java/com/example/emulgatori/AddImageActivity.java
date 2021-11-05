@@ -21,11 +21,14 @@ import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.Point;
 import android.net.Uri;
+import android.opengl.Visibility;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ImageView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -42,7 +45,8 @@ public class AddImageActivity extends AppCompatActivity {
     FloatingActionButton camFab; //Dugme za otvaranje kamere
     FloatingActionButton attachFab; //Dugme za otvaranje galerije
 
-    MenuItem doneBtn, cancelBtn, leftRotBtn, rightRotBtn;//Dugmad u Action baru (na vrhu)
+    MenuItem doneBtn, cancelBtn;
+    ImageView leftRotBtn, rightRotBtn, flipXBtn, flipYBtn; //Dugmad u Action baru (na vrhu)
 
     Intent pickImageIntent; //Intent za preuzimanje slike iz galerije
     SharedPreferences sharedPref;
@@ -56,6 +60,11 @@ public class AddImageActivity extends AppCompatActivity {
         camFab = findViewById(R.id.fabCamera);
         attachFab = findViewById(R.id.fabAttach);
         imageView = findViewById(R.id.img);
+        leftRotBtn = findViewById(R.id.rotate_left_btn);
+        rightRotBtn = findViewById(R.id.rotate_right_btn);
+        flipXBtn = findViewById(R.id.flipx_btn);
+        flipYBtn = findViewById(R.id.flipy_btn);
+
 
         Point size = new Point();
         getWindowManager().getDefaultDisplay().getSize(size);//DIMENZIJA EKRANA
@@ -86,33 +95,47 @@ public class AddImageActivity extends AppCompatActivity {
                     askForPermissionDialog("Potrebna dozvola", getString(R.string.read_memory_perm_message), Manifest.permission.READ_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE, true);
             }
         });
+
+        leftRotBtn.setOnClickListener(l -> {
+            photo = rotateBitmap(photo, -90);
+            imageView.setImageBitmap(photo);
+
+        });
+
+        rightRotBtn.setOnClickListener(l -> {
+            photo = rotateBitmap(photo, 90);
+            imageView.setImageBitmap(photo);
+        });
+
+        flipXBtn.setOnClickListener(l -> {
+            photo = flipBitmap(photo, true, false);
+            imageView.setImageBitmap(photo);
+
+        });
+
+        flipYBtn.setOnClickListener(l -> {
+            photo = flipBitmap(photo, false, true);
+            imageView.setImageBitmap(photo);
+        });
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu, menu);
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu, menu);
         cancelBtn = menu.findItem(R.id.cancel_btn);
         doneBtn = menu.findItem(R.id.done_btn);
-        leftRotBtn = menu.findItem(R.id.rotate_left_btn);
-        rightRotBtn = menu.findItem(R.id.rotate_right_btn);
+        leftRotBtn = findViewById(R.id.rotate_left_btn);
+        rightRotBtn = findViewById(R.id.rotate_right_btn);
+        flipXBtn = findViewById(R.id.flipx_btn);
+        flipYBtn = findViewById(R.id.flipy_btn);
+
 
         cancelBtn.setOnMenuItemClickListener(item -> {
             finish();//Vraca se u MainActivity
             return true;
         });
 
-        leftRotBtn.setOnMenuItemClickListener(item -> {
-            if(photo == null) return false;
-            photo = rotateBitmap(photo, -90);
-            imageView.setImageBitmap(photo);
-            return true;
-        });
-        rightRotBtn.setOnMenuItemClickListener(item -> {
-            if(photo == null) return false;
-            photo = rotateBitmap(photo, 90);
-            imageView.setImageBitmap(photo);
-            return true;
-        });
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -141,8 +164,8 @@ public class AddImageActivity extends AppCompatActivity {
 
                         imageView.setImageBitmap(photo);
                         doneBtn.setVisible(true);
-                        leftRotBtn.setVisible(true);
-                        rightRotBtn.setVisible(true);
+                        findViewById(R.id.tbar).setVisibility(View.VISIBLE);
+
                         //TODO -> BITMAPA SE (CROPUJE) i PROSLEEDJUJE U OPENCV/TESSERACT...
 
                     }
@@ -194,6 +217,13 @@ public class AddImageActivity extends AppCompatActivity {
     {
         Matrix matrix = new Matrix();
         matrix.postRotate(angle);
+        return Bitmap.createBitmap(bm, 0, 0, bm.getWidth(), bm.getHeight(), matrix, true);
+    }
+
+    public static Bitmap flipBitmap(Bitmap bm, boolean x, boolean y)
+    {
+        Matrix matrix = new Matrix();
+        matrix.postScale(x ? -1 : 1, y ? -1 : 1, bm.getWidth() / 2f, bm.getHeight() / 2f);
         return Bitmap.createBitmap(bm, 0, 0, bm.getWidth(), bm.getHeight(), matrix, true);
     }
 }
