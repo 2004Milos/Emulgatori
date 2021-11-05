@@ -18,6 +18,7 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.graphics.Point;
 import android.net.Uri;
 import android.os.Bundle;
@@ -37,10 +38,11 @@ public class AddImageActivity extends AppCompatActivity {
     IntentCode intentCode; //Za odredjivanje da li se slika preuzima iz galerije ili kamere
 
     ImageView imageView;
+    Bitmap photo;
     FloatingActionButton camFab; //Dugme za otvaranje kamere
     FloatingActionButton attachFab; //Dugme za otvaranje galerije
 
-    MenuItem doneBtn, cancelBtn;//Dugmad u Action baru (na vrhu)
+    MenuItem doneBtn, cancelBtn, leftRotBtn, rightRotBtn;//Dugmad u Action baru (na vrhu)
 
     Intent pickImageIntent; //Intent za preuzimanje slike iz galerije
     SharedPreferences sharedPref;
@@ -91,9 +93,24 @@ public class AddImageActivity extends AppCompatActivity {
         getMenuInflater().inflate(R.menu.menu, menu);
         cancelBtn = menu.findItem(R.id.cancel_btn);
         doneBtn = menu.findItem(R.id.done_btn);
+        leftRotBtn = menu.findItem(R.id.rotate_left_btn);
+        rightRotBtn = menu.findItem(R.id.rotate_right_btn);
 
         cancelBtn.setOnMenuItemClickListener(item -> {
             finish();//Vraca se u MainActivity
+            return true;
+        });
+
+        leftRotBtn.setOnMenuItemClickListener(item -> {
+            if(photo == null) return false;
+            photo = rotateBitmap(photo, -90);
+            imageView.setImageBitmap(photo);
+            return true;
+        });
+        rightRotBtn.setOnMenuItemClickListener(item -> {
+            if(photo == null) return false;
+            photo = rotateBitmap(photo, 90);
+            imageView.setImageBitmap(photo);
             return true;
         });
         return super.onCreateOptionsMenu(menu);
@@ -104,8 +121,6 @@ public class AddImageActivity extends AppCompatActivity {
                 @Override
                 public void onActivityResult(ActivityResult result) {
                     if (result.getResultCode() == Activity.RESULT_OK) {
-
-                        Bitmap photo;
 
                         switch(intentCode){
                             case galerija: //U slucaju da se slika preuzima iz galerije
@@ -124,9 +139,11 @@ public class AddImageActivity extends AppCompatActivity {
                             default: return;
                         }
 
-                        ((ImageView)findViewById(R.id.img)).setImageBitmap(photo);
+                        imageView.setImageBitmap(photo);
                         doneBtn.setVisible(true);
-                        //TODO -> BITMAPA SE CROPUJE i PROSLEEDJUJE U OPENCV/TESSERACT...
+                        leftRotBtn.setVisible(true);
+                        rightRotBtn.setVisible(true);
+                        //TODO -> BITMAPA SE (CROPUJE) i PROSLEEDJUJE U OPENCV/TESSERACT...
 
                     }
                 }
@@ -171,5 +188,12 @@ public class AddImageActivity extends AppCompatActivity {
                 .setNegativeButton(android.R.string.cancel, (dialog, id) -> {
                 });
         builder.create().show();
+    }
+
+    public static Bitmap rotateBitmap(Bitmap bm, float angle)
+    {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(angle);
+        return Bitmap.createBitmap(bm, 0, 0, bm.getWidth(), bm.getHeight(), matrix, true);
     }
 }
