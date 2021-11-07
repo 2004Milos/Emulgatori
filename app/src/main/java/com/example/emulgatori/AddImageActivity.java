@@ -21,7 +21,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.Point;
 import android.net.Uri;
-import android.opengl.Visibility;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.provider.Settings;
@@ -29,6 +28,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -45,8 +45,8 @@ public class AddImageActivity extends AppCompatActivity {
     FloatingActionButton camFab; //Dugme za otvaranje kamere
     FloatingActionButton attachFab; //Dugme za otvaranje galerije
 
-    MenuItem doneBtn, cancelBtn;
-    ImageView leftRotBtn, rightRotBtn, flipXBtn, flipYBtn; //Dugmad u Action baru (na vrhu)
+    MenuItem doneBtn, cancelBtn; //Dugmad u meni-u na vrhu
+    ImageButton leftRotBtn, rightRotBtn, flipXBtn, flipYBtn, cropBtn; //Dugmad u toolbaru
 
     Intent pickImageIntent; //Intent za preuzimanje slike iz galerije
     SharedPreferences sharedPref;
@@ -64,6 +64,7 @@ public class AddImageActivity extends AppCompatActivity {
         rightRotBtn = findViewById(R.id.rotate_right_btn);
         flipXBtn = findViewById(R.id.flipx_btn);
         flipYBtn = findViewById(R.id.flipy_btn);
+        cropBtn = findViewById(R.id.crop_btn);
 
 
         Point size = new Point();
@@ -116,6 +117,10 @@ public class AddImageActivity extends AppCompatActivity {
         flipYBtn.setOnClickListener(l -> {
             photo = flipBitmap(photo, false, true);
             imageView.setImageBitmap(photo);
+        });
+
+        cropBtn.setOnClickListener(l -> {
+
         });
     }
 
