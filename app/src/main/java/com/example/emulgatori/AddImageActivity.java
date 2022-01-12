@@ -89,6 +89,7 @@ public class AddImageActivity extends AppCompatActivity {
             Intent i = new Intent(MediaStore.ACTION_IMAGE_CAPTURE); //POKRETANJE KAMERE
             intentCode = IntentCode.kamera;
             StartForResult.launch(i);
+
         });
 
         attachFab.setOnClickListener(v -> {
@@ -133,6 +134,8 @@ public class AddImageActivity extends AppCompatActivity {
         cropBtn.setOnClickListener(l -> {
 
         });
+
+
     }
 
     @Override
@@ -164,8 +167,8 @@ public class AddImageActivity extends AppCompatActivity {
                         @Override
                         public void onSuccess(FirebaseVisionText result) {
                             String text = result.getText();
-                            Toast errorToast = Toast.makeText(AddImageActivity.this, text, Toast.LENGTH_LONG);
-                            errorToast.show();
+                            Toast toast = Toast.makeText(AddImageActivity.this, text, Toast.LENGTH_LONG);
+                            toast.show();
 
                         }
                     })
@@ -210,7 +213,8 @@ public class AddImageActivity extends AppCompatActivity {
                         doneBtn.setVisible(true);
                         findViewById(R.id.tbar).setVisibility(View.VISIBLE);
 
-
+                        Toast toast = Toast.makeText(AddImageActivity.this, "Rotirajte sliku tako da bude uspravna, ako već nije", Toast.LENGTH_LONG);
+                        toast.show();
                         //TODO -> BITMAPA SE (CROPUJE) i PROSLEEDJUJE U OPENCV/TESSERACT...
 
 
