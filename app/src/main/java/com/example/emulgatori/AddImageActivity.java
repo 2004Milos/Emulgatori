@@ -152,6 +152,34 @@ public class AddImageActivity extends AppCompatActivity {
             return true;
         });
 
+
+        doneBtn.setOnMenuItemClickListener(item -> {
+            FirebaseVisionImage fvimage = FirebaseVisionImage.fromBitmap(photo);
+
+            FirebaseVisionTextRecognizer textRecognizer = FirebaseVision.getInstance()
+                    .getOnDeviceTextRecognizer();
+
+            textRecognizer.processImage(fvimage)
+                    .addOnSuccessListener(new OnSuccessListener<FirebaseVisionText>() {
+                        @Override
+                        public void onSuccess(FirebaseVisionText result) {
+                            String text = result.getText();
+                            Toast errorToast = Toast.makeText(AddImageActivity.this, text, Toast.LENGTH_LONG);
+                            errorToast.show();
+
+                        }
+                    })
+                    .addOnFailureListener(
+                            new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull Exception e) {
+                                    Toast errorToast = Toast.makeText(AddImageActivity.this, e.getMessage(), Toast.LENGTH_LONG);
+                                    errorToast.show();
+                                }
+                            });
+            return true;
+        });
+
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -184,29 +212,7 @@ public class AddImageActivity extends AppCompatActivity {
 
 
                         //TODO -> BITMAPA SE (CROPUJE) i PROSLEEDJUJE U OPENCV/TESSERACT...
-                        FirebaseVisionImage fvimage = FirebaseVisionImage.fromBitmap(photo);
 
-                        FirebaseVisionTextRecognizer textRecognizer = FirebaseVision.getInstance()
-                                .getOnDeviceTextRecognizer();
-
-                        textRecognizer.processImage(fvimage)
-                                .addOnSuccessListener(new OnSuccessListener<FirebaseVisionText>() {
-                                    @Override
-                                    public void onSuccess(FirebaseVisionText result) {
-                                        String text = result.getText();
-                                        Toast errorToast = Toast.makeText(AddImageActivity.this, text, Toast.LENGTH_LONG);
-                                        errorToast.show();
-
-                                    }
-                                })
-                                .addOnFailureListener(
-                                        new OnFailureListener() {
-                                            @Override
-                                            public void onFailure(@NonNull Exception e) {
-                                                Toast errorToast = Toast.makeText(AddImageActivity.this, e.getMessage(), Toast.LENGTH_LONG);
-                                                errorToast.show();
-                                            }
-                                });
 
                     }
                 }
