@@ -24,14 +24,25 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.provider.Settings;
+import android.provider.Telephony;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.ml.vision.FirebaseVision;
+import com.google.firebase.ml.vision.common.FirebaseVisionImage;
+import com.google.firebase.ml.vision.text.FirebaseVisionCloudTextRecognizerOptions;
+import com.google.firebase.ml.vision.text.FirebaseVisionText;
+import com.google.firebase.ml.vision.text.FirebaseVisionTextRecognizer;
+
+import java.util.Arrays;
 
 enum IntentCode{galerija, kamera}
 
@@ -171,7 +182,31 @@ public class AddImageActivity extends AppCompatActivity {
                         doneBtn.setVisible(true);
                         findViewById(R.id.tbar).setVisibility(View.VISIBLE);
 
+
                         //TODO -> BITMAPA SE (CROPUJE) i PROSLEEDJUJE U OPENCV/TESSERACT...
+                        FirebaseVisionImage fvimage = FirebaseVisionImage.fromBitmap(photo);
+
+                        FirebaseVisionTextRecognizer textRecognizer = FirebaseVision.getInstance()
+                                .getOnDeviceTextRecognizer();
+
+                        textRecognizer.processImage(fvimage)
+                                .addOnSuccessListener(new OnSuccessListener<FirebaseVisionText>() {
+                                    @Override
+                                    public void onSuccess(FirebaseVisionText result) {
+                                        String text = result.getText();
+                                        Toast errorToast = Toast.makeText(AddImageActivity.this, text, Toast.LENGTH_LONG);
+                                        errorToast.show();
+
+                                    }
+                                })
+                                .addOnFailureListener(
+                                        new OnFailureListener() {
+                                            @Override
+                                            public void onFailure(@NonNull Exception e) {
+                                                Toast errorToast = Toast.makeText(AddImageActivity.this, e.getMessage(), Toast.LENGTH_LONG);
+                                                errorToast.show();
+                                            }
+                                });
 
                     }
                 }
