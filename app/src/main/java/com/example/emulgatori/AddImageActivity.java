@@ -7,6 +7,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 
 import android.Manifest;
 import android.app.Activity;
@@ -22,6 +23,8 @@ import android.graphics.Matrix;
 import android.graphics.Point;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.provider.Telephony;
@@ -42,6 +45,7 @@ import com.google.firebase.ml.vision.text.FirebaseVisionCloudTextRecognizerOptio
 import com.google.firebase.ml.vision.text.FirebaseVisionText;
 import com.google.firebase.ml.vision.text.FirebaseVisionTextRecognizer;
 
+import java.io.File;
 import java.util.Arrays;
 
 enum IntentCode{galerija, kamera}
@@ -49,6 +53,7 @@ enum IntentCode{galerija, kamera}
 public class AddImageActivity extends AppCompatActivity {
 
     final int READ_EXTERNAL_STORAGE = 100;
+    Uri urislike;
     IntentCode intentCode; //Za odredjivanje da li se slika preuzima iz galerije ili kamere
 
     ImageView imageView;
@@ -87,6 +92,8 @@ public class AddImageActivity extends AppCompatActivity {
 
         camFab.setOnClickListener(v -> {
             Intent i = new Intent(MediaStore.ACTION_IMAGE_CAPTURE); //POKRETANJE KAMERE
+            urislike =  FileProvider.getUriForFile(getApplicationContext(),BuildConfig.APPLICATION_ID + ".provider", new File(Environment.getExternalStorageDirectory().getPath() + "/slika.png"));
+            i.putExtra(MediaStore.EXTRA_OUTPUT,urislike);
             intentCode = IntentCode.kamera;
             StartForResult.launch(i);
 
@@ -204,7 +211,10 @@ public class AddImageActivity extends AppCompatActivity {
                                 photo = BitmapFactory.decodeFile(picturePath);
                                 break;
                             case kamera: //U slucaju da se slika preuzima sa kamere
-                                photo = (Bitmap)result.getData().getExtras().get("data");
+                                //photo = (Bitmap)result.getData().getExtras().get("data");
+                                BitmapFactory.Options options = new BitmapFactory.Options();
+                                options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+                                photo = BitmapFactory.decodeFile(Environment.getExternalStorageDirectory().getPath() + "/slika.png", options);
                                 break;
                             default: return;
                         }
