@@ -91,16 +91,22 @@ public class AddImageActivity extends AppCompatActivity {
         sharedPref = AddImageActivity.this.getSharedPreferences(getString(R.string.values_file_key), Context.MODE_PRIVATE);//Cuvanje podataka u memoriji, u key-value formatu
 
         camFab.setOnClickListener(v -> {
-            Intent i = new Intent(MediaStore.ACTION_IMAGE_CAPTURE); //POKRETANJE KAMERE
-            urislike =  FileProvider.getUriForFile(getApplicationContext(),BuildConfig.APPLICATION_ID + ".provider", new File(Environment.getExternalStorageDirectory().getPath() + "/slika.png"));
-            i.putExtra(MediaStore.EXTRA_OUTPUT,urislike);
             intentCode = IntentCode.kamera;
-            StartForResult.launch(i);
+            Intent imageIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+            File image = new File(getFilesDir(), "slika.png");
 
+            urislike = FileProvider.getUriForFile(
+                    getApplicationContext(),
+                    BuildConfig.APPLICATION_ID + ".provider",
+                    image);
+
+            imageIntent.putExtra(MediaStore.EXTRA_OUTPUT, urislike);
+            StartForResult.launch(imageIntent);
         });
 
         attachFab.setOnClickListener(v -> {
-            if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
+            {
                 intentCode = IntentCode.galerija;
                 StartForResult.launch(pickImageIntent); //POKRETANJE PRETRAGE SLIKA, AKO JE DATA DOZVOLA
             }
@@ -109,8 +115,9 @@ public class AddImageActivity extends AppCompatActivity {
             else {
                 //Ako korisnik nikad nije odbio premisiju - otvoriti dijalog, u suprotnom je odbio vise od 2 puta
                 // pa se dozvola mora dati korz podesavanja
-                if(sharedPref.getInt("BrojOdbijanjaReadPermisije", 0) == 0)
+                if(sharedPref.getInt("BrojOdbijanjaReadPermisije", 0) == 0) {
                     requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, READ_EXTERNAL_STORAGE);
+                }
                 else
                     askForPermissionDialog("Potrebna dozvola", getString(R.string.read_memory_perm_message), Manifest.permission.READ_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE, true);
             }
@@ -174,6 +181,9 @@ public class AddImageActivity extends AppCompatActivity {
                         @Override
                         public void onSuccess(FirebaseVisionText result) {
                             String text = result.getText();
+                            String rezultat;
+                            //TODO: Pretrega baze kljucnih reci
+
                             Toast toast = Toast.makeText(AddImageActivity.this, text, Toast.LENGTH_LONG);
                             toast.show();
 
@@ -214,7 +224,7 @@ public class AddImageActivity extends AppCompatActivity {
                                 //photo = (Bitmap)result.getData().getExtras().get("data");
                                 BitmapFactory.Options options = new BitmapFactory.Options();
                                 options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-                                photo = BitmapFactory.decodeFile(Environment.getExternalStorageDirectory().getPath() + "/slika.png", options);
+                                photo = BitmapFactory.decodeFile(getFilesDir()+ "/slika.png", options);
                                 break;
                             default: return;
                         }
@@ -245,6 +255,13 @@ public class AddImageActivity extends AppCompatActivity {
             int p = sharedPref.getInt("BrojOdbijanjaReadPermisije", 0)+1;
             SharedPreferences.Editor editor = sharedPref.edit();
             editor.putInt("BrojOdbijanjaReadPermisije", p); //broj odbijanja pristupa memoriji +1
+            editor.apply();
+        }
+        else if(requestCode == READ_EXTERNAL_STORAGE+1)
+        {
+            int p = sharedPref.getInt("BrojOdbijanjaManPermisije", 0)+1;
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putInt("BrojOdbijanjaManPermisije", p); //broj odbijanja manage memoriji +1
             editor.apply();
         }
     }
