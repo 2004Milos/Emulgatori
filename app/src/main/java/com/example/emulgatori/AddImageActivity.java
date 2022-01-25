@@ -17,6 +17,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -181,11 +182,26 @@ public class AddImageActivity extends AppCompatActivity {
                         @Override
                         public void onSuccess(FirebaseVisionText result) {
                             String text = result.getText();
-                            String rezultat;
-                            //TODO: Pretrega baze kljucnih reci
 
-                            Toast toast = Toast.makeText(AddImageActivity.this, text, Toast.LENGTH_LONG);
+                            //TODO: Pretrega baze kljucnih reci ---------------------------------------
+                            SQLiteDatabase dbase = openOrCreateDatabase("aditivi",MODE_PRIVATE,null);;
+                            String res = "";
+                            for (String rec : text.split("\\s+")) {
+                                String query="SELECT * FROM Emulgator WHERE Naziv LIKE '" + rec + "'"; //TODO: Porediti sa drugim nazivom!!
+                                Cursor cursor=(dbase).rawQuery(query, null);
+                                while (cursor.moveToNext()) {
+                                    if(!res.contains(cursor.getString(0))) {
+                                        res += cursor.getString(0);
+                                        res += (": " + cursor.getString(1)) + "\n";
+                                    }
+                                }
+                                cursor.close();
+                            }
+                            res = (res == "") ?("Proizvod ne sadrzi aditive iz baze.") : ("Proizvod sadrži sledeće aditive:\n" + res);
+                            Toast toast = Toast.makeText(AddImageActivity.this, res, Toast.LENGTH_LONG);
                             toast.show();
+
+                            //TODO: KRAJ PRETREGE KLJUCNIH RECI -------------------------------------
 
                         }
                     })
