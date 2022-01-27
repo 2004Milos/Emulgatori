@@ -13,6 +13,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -20,19 +21,27 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Insets;
 import android.graphics.Matrix;
 import android.graphics.Point;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.provider.Telephony;
+import android.text.Editable;
+import android.text.InputType;
+import android.util.DisplayMetrics;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowInsets;
+import android.view.WindowMetrics;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -48,6 +57,7 @@ import com.google.firebase.ml.vision.text.FirebaseVisionTextRecognizer;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Locale;
 
 enum IntentCode{galerija, kamera}
 
@@ -63,7 +73,7 @@ public class AddImageActivity extends AppCompatActivity {
     FloatingActionButton attachFab; //Dugme za otvaranje galerije
 
     MenuItem doneBtn, cancelBtn; //Dugmad u meni-u na vrhu
-    ImageButton leftRotBtn, rightRotBtn, flipXBtn, flipYBtn, cropBtn; //Dugmad u toolbaru
+    ImageButton leftRotBtn, rightRotBtn, flipXBtn, flipYBtn; //Dugmad u toolbaru
 
     Intent pickImageIntent; //Intent za preuzimanje slike iz galerije
     SharedPreferences sharedPref;
@@ -81,11 +91,17 @@ public class AddImageActivity extends AppCompatActivity {
         rightRotBtn = findViewById(R.id.rotate_right_btn);
         flipXBtn = findViewById(R.id.flipx_btn);
         flipYBtn = findViewById(R.id.flipy_btn);
-        cropBtn = findViewById(R.id.crop_btn);
 
 
         Point size = new Point();
-        getWindowManager().getDefaultDisplay().getSize(size);//DIMENZIJA EKRANA
+        if(Build.VERSION.SDK_INT < 30)
+            getWindowManager().getDefaultDisplay().getSize(size);//DIMENZIJA EKRANA
+        else {
+            WindowMetrics windowMetrics = ((Activity) this).getWindowManager().getCurrentWindowMetrics();
+            Insets insets = windowMetrics.getWindowInsets()
+                    .getInsetsIgnoringVisibility(WindowInsets.Type.systemBars());
+            size = new Point(windowMetrics.getBounds().width() - insets.left - insets.right, windowMetrics.getBounds().height() - insets.top - insets.bottom);
+        }
         attachFab.setX(0.22f * size.x);
 
         pickImageIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI); //Intent za otvaranje galerije
@@ -145,12 +161,6 @@ public class AddImageActivity extends AppCompatActivity {
             photo = flipBitmap(photo, false, true);
             imageView.setImageBitmap(photo);
         });
-
-        cropBtn.setOnClickListener(l -> {
-
-        });
-
-
     }
 
     @Override
@@ -172,51 +182,127 @@ public class AddImageActivity extends AppCompatActivity {
 
 
         doneBtn.setOnMenuItemClickListener(item -> {
-            FirebaseVisionImage fvimage = FirebaseVisionImage.fromBitmap(photo);
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Unesite naziv proizvoda");
+            final EditText input = new EditText(this);
+            input.setInputType(InputType.TYPE_CLASS_TEXT);
+            builder.setView(input);
+            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
 
-            FirebaseVisionTextRecognizer textRecognizer = FirebaseVision.getInstance()
-                    .getOnDeviceTextRecognizer();
+                    final String ImeProizvoda = input.getText().toString();
 
-            textRecognizer.processImage(fvimage)
-                    .addOnSuccessListener(new OnSuccessListener<FirebaseVisionText>() {
-                        @Override
-                        public void onSuccess(FirebaseVisionText result) {
-                            String text = result.getText();
+                    FirebaseVisionImage fvimage = FirebaseVisionImage.fromBitmap(photo);
 
-                            //TODO: Pretrega baze kljucnih reci ---------------------------------------
-                            SQLiteDatabase dbase = openOrCreateDatabase("aditivi",MODE_PRIVATE,null);;
-                            String res = "";
-                            for (String rec : text.split("\\s+")) {
-                                String query="SELECT * FROM Emulgator WHERE Naziv LIKE '" + rec + "'"; //TODO: Porediti sa drugim nazivom!!
-                                Cursor cursor=(dbase).rawQuery(query, null);
-                                while (cursor.moveToNext()) {
-                                    if(!res.contains(cursor.getString(0))) {
-                                        res += cursor.getString(0);
-                                        res += (": " + cursor.getString(1)) + "\n";
+                    FirebaseVisionTextRecognizer textRecognizer = FirebaseVision.getInstance()
+                            .getOnDeviceTextRecognizer();
+
+                    textRecognizer.processImage(fvimage)
+                            .addOnSuccessListener(new OnSuccessListener<FirebaseVisionText>() {
+                                @Override
+                                public void onSuccess(FirebaseVisionText result) {
+                                    String text = result.getText();
+
+                                    //TODO: Pretrega baze kljucnih reci ---------------------------------------
+                                    SQLiteDatabase dbase = openOrCreateDatabase("aditivi", MODE_PRIVATE, null);
+                                    ;
+                                    String res = "";
+                                    boolean jeProslaRecUneta = false;
+                                    for (String rec : text.split("\\s+")) {
+                                        if (rec.contains("'") || rec.contains("\\"))
+                                            continue;
+                                        String query = "SELECT * FROM Emulgator WHERE '" + rec + "' LIKE '%' || Naziv || '%' OR '" + rec + "' LIKE '%' || drugi_naziv || '%'"; //TODO: Porediti sa drugim nazivom!!, Stranica gde izlazi!
+                                        rec = ocistiRecNaKraju(rec);
+                                        if ((rec.endsWith("g") || rec.toLowerCase().endsWith("j") || rec.endsWith("l") || rec.endsWith("%")) && rec.length() > 1) {
+                                            jeProslaRecUneta = false;
+                                            continue;
+                                        }
+                                        if (jeProslaRecUneta && jeRecMernaJedinica(rec)) {
+                                            String rest = "";
+                                            for (int i = 0; i < res.split(System.lineSeparator()).length - 1; i++)
+                                                rest += res.split(System.lineSeparator())[i] + "\n";
+                                            res = rest;
+                                        }
+                                        Cursor cursor = (dbase).rawQuery(query, null);
+                                        jeProslaRecUneta = false;
+                                        int n = 0;
+                                        String prosloIme = "";
+                                        while (cursor.moveToNext()) {
+                                            if (!res.contains(cursor.getString(0))) {
+                                                n++;
+                                                if (n > 1 && cursor.getString(0).contains(prosloIme)) {
+                                                    String rest = "";
+                                                    for (int i = 0; i < res.split(System.lineSeparator()).length - 1; i++)
+                                                        rest += res.split(System.lineSeparator())[i] + "\n";
+                                                    res = rest;
+                                                }
+                                                prosloIme = cursor.getString(0);
+                                                res += ("E" + cursor.getString(0));
+                                                res += (": " + cursor.getString(1)) + "\n";
+                                                jeProslaRecUneta = true;
+                                            }
+                                        }
+                                        cursor.close();
+                                    }
+                                    res = (res == "") ? ("Proizvod ne sadrži aditive iz baze.") : ("Proizvod sadrži sledeće aditive:\n" + res);
+                                    //TODO: KRAJ PRETREGE KLJUCNIH RECI -------------------------------------
+
+                                    try{
+                                        if(ImeProizvoda.isEmpty() || ImeProizvoda.contains("'") || ImeProizvoda.contains("\\") || ImeProizvoda.contains("\n"))
+                                            throw new Exception("Nevalidnan string");
+                                        dbase.execSQL("INSERT INTO Proizvodi VALUES ('" + ImeProizvoda + "','" + res + "')");
+                                        finish();
+
+                                    }
+                                    catch(Exception e)
+                                    {
+                                        dialog.cancel();
+                                        Toast toast = Toast.makeText(AddImageActivity.this, "Obavezno uneti validno ime proizvoda", Toast.LENGTH_LONG);
+                                        toast.show();
+                                    }
+                                    finally {
+                                        dbase.close();
                                     }
                                 }
-                                cursor.close();
-                            }
-                            res = (res == "") ?("Proizvod ne sadrzi aditive iz baze.") : ("Proizvod sadrži sledeće aditive:\n" + res);
-                            Toast toast = Toast.makeText(AddImageActivity.this, res, Toast.LENGTH_LONG);
-                            toast.show();
+                            })
+                            .addOnFailureListener(
+                                    new OnFailureListener() {
+                                        @Override
+                                        public void onFailure(@NonNull Exception e) {
+                                            Toast errorToast = Toast.makeText(AddImageActivity.this, e.getMessage(), Toast.LENGTH_LONG);
+                                            errorToast.show();
+                                        }
+                                    });
 
-                            //TODO: KRAJ PRETREGE KLJUCNIH RECI -------------------------------------
+                }
+            });
+            builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.cancel();
+                }
+            });
 
-                        }
-                    })
-                    .addOnFailureListener(
-                            new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-                                    Toast errorToast = Toast.makeText(AddImageActivity.this, e.getMessage(), Toast.LENGTH_LONG);
-                                    errorToast.show();
-                                }
-                            });
+            builder.show();
+
             return true;
         });
 
         return super.onCreateOptionsMenu(menu);
+    }
+
+    private boolean jeRecMernaJedinica(String rec) {
+        String[] jedinice = {"mg", "g", "kg", "l", "ml", "cl", "cal", "kcal", "kj", "%"};
+        return Arrays.asList(jedinice).contains(rec.toLowerCase());
+    }
+
+    private String ocistiRecNaKraju(String rec)
+    {
+        if(rec.isEmpty()) return "";
+        if(!Character.isDigit(rec.charAt(rec.length()-1)) && !Character.isAlphabetic(rec.charAt(rec.length()-1)))
+            return rec.substring(0, rec.length() - 1);
+        return rec;
     }
 
     ActivityResultLauncher<Intent> StartForResult = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
@@ -251,8 +337,6 @@ public class AddImageActivity extends AppCompatActivity {
 
                         Toast toast = Toast.makeText(AddImageActivity.this, "Rotirajte sliku tako da bude uspravna, ako već nije", Toast.LENGTH_LONG);
                         toast.show();
-                        //TODO -> BITMAPA SE (CROPUJE) i PROSLEEDJUJE U OPENCV/TESSERACT...
-
 
                     }
                 }
