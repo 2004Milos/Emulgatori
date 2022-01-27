@@ -31,8 +31,6 @@ import android.os.Environment;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.provider.Settings;
-import android.provider.Telephony;
-import android.text.Editable;
 import android.text.InputType;
 import android.util.DisplayMetrics;
 import android.view.Menu;
@@ -58,6 +56,7 @@ import com.google.firebase.ml.vision.text.FirebaseVisionTextRecognizer;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.regex.Pattern;
 
 enum IntentCode{galerija, kamera}
 
@@ -204,7 +203,6 @@ public class AddImageActivity extends AppCompatActivity {
                                 public void onSuccess(FirebaseVisionText result) {
                                     String text = result.getText();
 
-                                    //TODO: Pretrega baze kljucnih reci ---------------------------------------
                                     SQLiteDatabase dbase = openOrCreateDatabase("aditivi", MODE_PRIVATE, null);
                                     ;
                                     String res = "";
@@ -212,13 +210,13 @@ public class AddImageActivity extends AppCompatActivity {
                                     for (String rec : text.split("\\s+")) {
                                         if (rec.contains("'") || rec.contains("\\"))
                                             continue;
-                                        String query = "SELECT * FROM Emulgator WHERE '" + rec + "' LIKE '%' || Naziv || '%' OR '" + rec + "' LIKE '%' || drugi_naziv || '%'"; //TODO: Porediti sa drugim nazivom!!, Stranica gde izlazi!
+                                        String query = "SELECT * FROM Emulgator WHERE '" + rec + "' LIKE '%' || Naziv || '%' OR '" + rec + "' LIKE '%' || drugi_naziv || '%'";
                                         rec = ocistiRecNaKraju(rec);
-                                        if ((rec.endsWith("g") || rec.toLowerCase().endsWith("j") || rec.endsWith("l") || rec.endsWith("%")) && rec.length() > 1) {
+                                        if ((rec.endsWith("g") || rec.toLowerCase().endsWith("j") || rec.endsWith("l") || rec.endsWith("%")) && !jeRecMernaJedinica(rec)) { //100g
                                             jeProslaRecUneta = false;
                                             continue;
                                         }
-                                        if (jeProslaRecUneta && jeRecMernaJedinica(rec)) {
+                                        if (jeProslaRecUneta && (jeRecMernaJedinica(rec) || rec.length()==1)) { //100 g
                                             String rest = "";
                                             for (int i = 0; i < res.split(System.lineSeparator()).length - 1; i++)
                                                 rest += res.split(System.lineSeparator())[i] + "\n";
@@ -228,7 +226,11 @@ public class AddImageActivity extends AppCompatActivity {
                                         jeProslaRecUneta = false;
                                         int n = 0;
                                         String prosloIme = "";
+
                                         while (cursor.moveToNext()) {
+                                            Pattern p = Pattern.compile("(^"+cursor.getString(0)+"(\\d+))|(^(\\d+)"+cursor.getString(0)+")");
+                                            if(p.matcher(rec).matches())
+                                                continue;
                                             if (!res.contains(cursor.getString(0))) {
                                                 n++;
                                                 if (n > 1 && cursor.getString(0).contains(prosloIme)) {
@@ -246,7 +248,6 @@ public class AddImageActivity extends AppCompatActivity {
                                         cursor.close();
                                     }
                                     res = (res == "") ? ("Proizvod ne sadrži aditive iz baze.") : ("Proizvod sadrži sledeće aditive:\n" + res);
-                                    //TODO: KRAJ PRETREGE KLJUCNIH RECI -------------------------------------
 
                                     try{
                                         if(ImeProizvoda.isEmpty() || ImeProizvoda.contains("'") || ImeProizvoda.contains("\\") || ImeProizvoda.contains("\n"))
@@ -327,6 +328,7 @@ public class AddImageActivity extends AppCompatActivity {
                                 BitmapFactory.Options options = new BitmapFactory.Options();
                                 options.inPreferredConfig = Bitmap.Config.ARGB_8888;
                                 photo = BitmapFactory.decodeFile(getFilesDir()+ "/slika.png", options);
+                                photo = rotateBitmap(photo, 90);
                                 break;
                             default: return;
                         }
